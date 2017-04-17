@@ -1,3 +1,7 @@
+## Main script
+
+####################################################################
+
 computerFlag="cluster"
 computerFlag=""
 
@@ -402,6 +406,10 @@ invisible(dev.off())
 
 save.image("tmp_3.RData")
 
+####################################################################
+####################################################################
+## Section 2
+
 ############################## Examples on how to factor variables, modify variables, modify variable names..etc  if necessary
 #colnames(pdata)[14]<-"Sentrix_Position"
 #colnames(pdata)[15]<-"Sentrix_ID"
@@ -692,13 +700,13 @@ sep = "\t", col.names = T, row.names = T, append = F, quote=FALSE)
 
 ####################################################################
 ####################################################################
-## Section 2
+## Section 3
 
 ## Run linReg_moba.R with linReg_moba.txt script
 
 #######################
 #######################
-## Section 3
+## Section 4
 ## Annotation
 
 if (F) {
@@ -1052,7 +1060,7 @@ dev.off()
 
 ####################################################################
 ####################################################################
-## Section 4
+## Section 5
 ## Create table 1, table 2
 
 computerFlag="cluster"

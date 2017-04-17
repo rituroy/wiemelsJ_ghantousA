@@ -1,3 +1,7 @@
+## Run script.R section 1 first
+
+####################################################################
+
 cohort="_allGuthSet2"
 cohort="_noHispWt_allGuthSet2"
 

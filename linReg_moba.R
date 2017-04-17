@@ -1,4 +1,5 @@
-
+## Run script.R section 1 and 2 first
+## Then run this with linReg_moba_script.txt
 
 ###################################################  Models
 

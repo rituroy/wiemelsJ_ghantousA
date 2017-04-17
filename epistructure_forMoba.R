@@ -1,3 +1,7 @@
+## Run script.R section 1 then refactor_forMoba.R first
+
+####################################################################
+
 computerFlag=""
 computerFlag="cluster"
 
