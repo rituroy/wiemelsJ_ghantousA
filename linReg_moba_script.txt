@@ -1,0 +1,100 @@
+cd /Users/royr/UCSF/JoeWiemels/leukMeth
+
+qRscript linReg_moba.R "1-i"
+qRscript linReg_moba.R "1-ii"
+qRscript linReg_moba.R "2a-i"
+qRscript linReg_moba.R "2a-ii"
+qRscript linReg_moba.R "2b-i"
+qRscript linReg_moba.R "2b-ii"
+qRscript linReg_moba.R "3b-i"
+qRscript linReg_moba.R "3b-ii"
+qRscript linReg_moba.R "3c-i"
+qRscript linReg_moba.R "3c-ii"
+#qRscript linReg_moba.R "4b-i"
+#qRscript linReg_moba.R "4b-ii"
+#qRscript linReg_moba.R "4c-i"
+#qRscript linReg_moba.R "4c-ii"
+
+
+names(xMat)
+dim(xMat)
+x=phen$gestage[match(rownames(beta_matrix),phen$id)]
+table(phen$gestage)
+table(x)
+table(xMat$predVar==x*7)
+table(xMat$predVar==as.integer(x<37))
+y=phen$birth[match(rownames(beta_matrix),phen$id)]
+table(phen$birth)
+table(y)
+fName
+
+
+
+
+
+
+
+
+
+
+
+[royr@cclc01 JoeWiemels]$ qRscript linReg_moba.R "1-i"
+Rscript: /home/shared/cbc/software/R-latest/bin/Rscript
+args= "linReg_moba.R" "1-i"
+# /home/shared/cbc/software/R-latest/bin/Rscript  "linReg_moba.R" "1-i"
+qsub -j oe -d /home/royr/project/JoeWiemels -N 20170406-171631 -
+787343.cclc01.som.ucsf.edu
+[royr@cclc01 JoeWiemels]$ qRscript linReg_moba.R "1-ii"
+Rscript: /home/shared/cbc/software/R-latest/bin/Rscript
+args= "linReg_moba.R" "1-ii"
+# /home/shared/cbc/software/R-latest/bin/Rscript  "linReg_moba.R" "1-ii"
+qsub -j oe -d /home/royr/project/JoeWiemels -N 20170406-171636 -
+787344.cclc01.som.ucsf.edu
+[royr@cclc01 JoeWiemels]$ qRscript linReg_moba.R "2a-i"
+Rscript: /home/shared/cbc/software/R-latest/bin/Rscript
+args= "linReg_moba.R" "2a-i"
+# /home/shared/cbc/software/R-latest/bin/Rscript  "linReg_moba.R" "2a-i"
+qsub -j oe -d /home/royr/project/JoeWiemels -N 20170408-152230 -
+793918.cclc01.som.ucsf.edu
+[royr@cclc01 JoeWiemels]$ qRscript linReg_moba.R "2a-ii"
+Rscript: /home/shared/cbc/software/R-latest/bin/Rscript
+args= "linReg_moba.R" "2a-ii"
+# /home/shared/cbc/software/R-latest/bin/Rscript  "linReg_moba.R" "2a-ii"
+qsub -j oe -d /home/royr/project/JoeWiemels -N 20170408-152235 -
+793919.cclc01.som.ucsf.edu
+[royr@cclc01 JoeWiemels]$ qRscript linReg_moba.R "2b-i"
+Rscript: /home/shared/cbc/software/R-latest/bin/Rscript
+args= "linReg_moba.R" "2b-i"
+# /home/shared/cbc/software/R-latest/bin/Rscript  "linReg_moba.R" "2b-i"
+qsub -j oe -d /home/royr/project/JoeWiemels -N 20170408-152239 -
+793920.cclc01.som.ucsf.edu
+[royr@cclc01 JoeWiemels]$ qRscript linReg_moba.R "2b-ii"
+Rscript: /home/shared/cbc/software/R-latest/bin/Rscript
+args= "linReg_moba.R" "2b-ii"
+# /home/shared/cbc/software/R-latest/bin/Rscript  "linReg_moba.R" "2b-ii"
+qsub -j oe -d /home/royr/project/JoeWiemels -N 20170408-152243 -
+793921.cclc01.som.ucsf.edu
+[royr@cclc01 JoeWiemels]$ qRscript linReg_moba.R "3b-i"
+Rscript: /home/shared/cbc/software/R-latest/bin/Rscript
+args= "linReg_moba.R" "3b-i"
+# /home/shared/cbc/software/R-latest/bin/Rscript  "linReg_moba.R" "3b-i"
+qsub -j oe -d /home/royr/project/JoeWiemels -N 20170408-152247 -
+793922.cclc01.som.ucsf.edu
+[royr@cclc01 JoeWiemels]$ qRscript linReg_moba.R "3b-ii"
+Rscript: /home/shared/cbc/software/R-latest/bin/Rscript
+args= "linReg_moba.R" "3b-ii"
+# /home/shared/cbc/software/R-latest/bin/Rscript  "linReg_moba.R" "3b-ii"
+qsub -j oe -d /home/royr/project/JoeWiemels -N 20170408-152251 -
+793923.cclc01.som.ucsf.edu
+[royr@cclc01 JoeWiemels]$ qRscript linReg_moba.R "3c-i"
+Rscript: /home/shared/cbc/software/R-latest/bin/Rscript
+args= "linReg_moba.R" "3c-i"
+# /home/shared/cbc/software/R-latest/bin/Rscript  "linReg_moba.R" "3c-i"
+qsub -j oe -d /home/royr/project/JoeWiemels -N 20170408-152254 -
+793924.cclc01.som.ucsf.edu
+[royr@cclc01 JoeWiemels]$ qRscript linReg_moba.R "3c-ii"
+Rscript: /home/shared/cbc/software/R-latest/bin/Rscript
+args= "linReg_moba.R" "3c-ii"
+# /home/shared/cbc/software/R-latest/bin/Rscript  "linReg_moba.R" "3c-ii"
+qsub -j oe -d /home/royr/project/JoeWiemels -N 20170408-152258 -
+793925.cclc01.som.ucsf.edu
