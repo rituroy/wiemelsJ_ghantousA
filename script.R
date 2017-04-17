@@ -790,14 +790,12 @@ if (F) {
 
 if (T) {
     if (F) {
-    cat("\n\n============================ ",modelId,"\n\n",sep="")
+        cat("\n\n============================ ",modelId,"\n\n",sep="")
 
+        ## ------------------------
+        nProbe=10001
+        nProbe=-1
 
-    ## ------------------------
-    nProbe=10001
-    nProbe=-1
-
-    load("data.RData")
         tdat=read.table(paste("meth.2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
         rownames(tdat)=tdat$cpgId
         tdat=tdat[,-1]
@@ -813,6 +811,7 @@ if (T) {
         save(tdat,pdata,counts,file="data.RData")
     }
 
+    load("data.RData")
     betas=t(tdat)
     rm(tdat,counts)
 
@@ -1088,11 +1087,11 @@ load(paste(dirAnn,"tesm.RData",sep=""))
 
 
 ## ------------------------
-load("tmp_3.RData")
-load("data.RData")
-load("tesm.RData")
+#load(paste(dirAnn,"tmp_3.RData",sep=""))
+load(paste(dirAnn,"data.RData",sep=""))
+load(paste(dirAnn,"tesm.RData",sep=""))
 tmp=rep(NA,nrow(tesm))
-ann2=data.frame(IlmnID=tesm$IlmnID,snp=tmp,snp50=tmp,stringsAsFactors=F)
+ann2=data.frame(IlmnID=tesm$probeID,snp=tmp,snp50=tmp,stringsAsFactors=F)
 
 if (F) {
     nProbe=-1
@@ -1115,12 +1114,19 @@ if (F) {
 fileList=dir(dirRes,pattern="ind.res_model")
 fileList=fileList[1:2]
 modelList=c("1-i","1-ii","2a-i","2a-ii","2b-i","2b-ii","3b-i","3b-ii","3c-i","3c-ii","4b-i","4b-ii","4c-i","4c-ii")
-modelList=modelList[c(1,14)]
-modelList=modelList[c(1,10)]
+#modelList=modelList[c(1,14)]
+modelList=modelList[c(1:10)]
+#modelList="3c-i"
 tmp=rep(NA,length(modelList)); tmpC=rep("",length(modelList))
 tbl1 <- data.frame(model=tmpC,numSam=tmp,numProbe=tmp,numSig=tmp,lambda=tmp,stringsAsFactors=F)
 tbl1$numSam=nrow(tdat)
 tbl1$numProbe=ncol(tdat)
+
+
+betas=t(tdat)
+rm(tdat)
+
+
 for (fId in 1:length(modelList)) {
     #modelId=sub("ind.res_model","",sub(".txt","",fileList[fId],fixed=T),fixed=T)
     modelId=modelList[fId]
