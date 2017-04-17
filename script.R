@@ -698,16 +698,40 @@ desc <- t(apply(tdat,2,descriptives))
 write.table(desc, file = paste(output_dir,"/MOBA3_Descriptives.txt", sep = ""),
 sep = "\t", col.names = T, row.names = T, append = F, quote=FALSE)
 
+
+
 ####################################################################
 ####################################################################
 ## Section 3
 
 ## Run linReg_moba.R with linReg_moba.txt script
 
+
+
 #######################
 #######################
 ## Section 4
 ## Annotation
+
+computerFlag="cluster"
+computerFlag=""
+
+if (computerFlag=="cluster") {
+} else {
+    dirSrc="/Users/royr/UCSF/"
+    dirSrc2=dirSrc
+    setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
+}
+## ------------------------
+
+output_dir="tmp"
+if (computerFlag=="cluster") {
+    dirAnn=""
+    dirRes="./"
+} else {
+    dirAnn="results/moba/misc/"
+    dirRes="results/moba/output/stat/"
+}
 
 if (F) {
     load("ann.RData")
@@ -809,33 +833,31 @@ if (T) {
         counts=as.matrix(counts[,-1])
         
         save(tdat,pdata,counts,file="data.RData")
-    }
-
-    load("data.RData")
-    betas=t(tdat)
-    rm(tdat,counts)
-
-    ## ------------------------
-    if (F) {
+        
+        load(paste(dirAnn,"data.RData",sep=""))
+        betas=t(tdat)
+        rm(tdat,counts)
+        
+        ## ------------------------
         library(FDb.InfiniumMethylation.hg19)
         library(TxDb.Hsapiens.UCSC.hg19.knownGene)
-
+        
         datadir=""
         datadir="results/moba/output/stat/"
         #all.results1=read.table(paste("ind.res_model",gsub("-","_",modelId),".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         all.results1=read.table(paste(datadir,"ind.res_model",gsub("-","_",modelId),".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-
-
+        
+        
         output_dir="tmp"
-
+        
         ## Calculate lambda
         lambda <- qchisq(median(all.results1$P_VAL,na.rm=T), df = 1, lower.tail = F)/qchisq(0.5, 1)
-
+        
         jpeg(paste(output_dir, "/qqplotmodel",gsub("-","_",modelId),".jpg",sep=""))    #### change qqplot name according to regression #### model code
         #suppressWarnings(qq(all.results1$P_VAL,main=paste("QQ plot: ","lambda=",lambda,sep="")))
         suppressWarnings(qqnorm(all.results1$P_VAL,main=paste("QQ plot: ","lambda=",lambda,sep="")))
         invisible(dev.off())
-
+        
         qvalues <- p.adjust(all.results1$P_VAL,method="BH")
         pvBonf <- p.adjust(all.results1$P_VAL,method="bonferroni")
         qvaluesInter <- p.adjust(all.results1$Inter_P_VAL,method="BH")
@@ -843,63 +865,66 @@ if (T) {
         group2 <- which(pdata$caco=="0")
         # selection <- sort(c(group1,group2))
         deltabeta <- rowMeans(betas[,group1],na.rm = T)-rowMeans(betas[,group2],na.rm = T) #(Case - Control)
-
+        
         group1M <- which(pdata$caco=="1" & pdata$Gender=="M")   ### define first group of
         group2M <- which(pdata$caco=="0" & pdata$Gender=="M")
         deltabetaM <- rowMeans(betas[,group1M],na.rm = T)-rowMeans(betas[,group2M],na.rm = T) #(Case - Control)
-
+        
         group1F <- which(pdata$caco=="1" & pdata$Gender=="F")   ### define first group of
         group2F <- which(pdata$caco=="0" & pdata$Gender=="F")
         deltabetaF <- rowMeans(betas[,group1F],na.rm = T)-rowMeans(betas[,group2F],na.rm = T) #(Case - Control)
         all.results1f <- cbind(all.results1,qvalues,pvBonf,qvaluesInter,deltabeta,deltabetaM,deltabetaF)
-
+        
         ###### tes is a data.frame for annotating the CpGs to the nearest gene. It should have at least 2 columns, one with CpG ID and another with nearest gene name.
-        genome="hg19"
-        getTxdb <- function(genome="hg19") {
-            if      (grepl("hg",genome)) { species="Hsapiens"
-            } else if (grepl("mm",genome)) { species="Mmusculus"
-            } else { return ("no reference") }
+        if (F) {
+            genome="hg19"
+            getTxdb <- function(genome="hg19") {
+                if      (grepl("hg",genome)) { species="Hsapiens"
+                } else if (grepl("mm",genome)) { species="Mmusculus"
+                } else { return ("no reference") }
+                
+                suppressMessages(pkg<-paste("TxDb", species, "UCSC", genome ,"knownGene", sep="."))
+                print(pkg)
+                library(pkg, character.only = TRUE)
+                txdb <- eval(parse(text = pkg))
+                return(txdb)
+            }
+            columns(txdb)
+            txdb <- getTxdb(genome)
+            #genes <- genes(txdb)
+            #(ranges(genes)@start+ranges(genes)@width-1)
+            genes <- genes(txdb,columns=c("TXNAME","TXSTART","TXEND"))
             
-            suppressMessages(pkg<-paste("TxDb", species, "UCSC", genome ,"knownGene", sep="."))
-            print(pkg)
-            library(pkg, character.only = TRUE)
-            txdb <- eval(parse(text = pkg))
-            return(txdb)
+            datadir="results/moba/misc/"
+            datadir=""
+            ann2 <- read.table(paste(datadir,"annotation_uscs_hg19_knownGene.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,skip=1)
+            names(ann2) <- c("ucscId","geneSym")
+            table(unique(unlist(genes$TXNAME))%in%ann2$ucscId)
+            geneSym=rep("",length(genes))
+            length(geneSym)
+            for (i in 1:length(genes$TXNAME)) {
+                if (i%%5000==0) print(i)
+                k=match(genes$TXNAME[[i]],ann2$ucscId); k=k[!is.na(k)]
+                if (length(k)!=0) geneSym[i]=paste(unique(ann2$geneSym[k]),collapse=" ")
+            }
+            #########################
+            
+            
+            hm <- get450k()
+            overlap <- nearest(hm,genes)
+            
+            #tes <- data.frame(probeID=hm@ranges@NAMES,nearestgene=genes[overlap]$gene_name)
+            tes <- data.frame(probeID=hm@ranges@NAMES,nearestgene=geneSym[overlap])
+            tesm <- merge(all.results1f,tes,by="probeID",sort=F)
         }
-        columns(txdb)
-        txdb <- getTxdb(genome)
-        #genes <- genes(txdb)
-        #(ranges(genes)@start+ranges(genes)@width-1)
-        genes <- genes(txdb,columns=c("TXNAME","TXSTART","TXEND"))
-
-        datadir="results/moba/misc/"
-        datadir=""
-        ann2 <- read.table(paste(datadir,"annotation_uscs_hg19_knownGene.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,skip=1)
-        names(ann2) <- c("ucscId","geneSym")
-        table(unique(unlist(genes$TXNAME))%in%ann2$ucscId)
-        geneSym=rep("",length(genes))
-        length(geneSym)
-        for (i in 1:length(genes$TXNAME)) {
-            if (i%%5000==0) print(i)
-            k=match(genes$TXNAME[[i]],ann2$ucscId); k=k[!is.na(k)]
-            if (length(k)!=0) geneSym[i]=paste(unique(ann2$geneSym[k]),collapse=" ")
-        }
-        #########################
-
-
-        hm <- get450k()
-        overlap <- nearest(hm,genes)
-
-        #tes <- data.frame(probeID=hm@ranges@NAMES,nearestgene=genes[overlap]$gene_name)
-        tes <- data.frame(probeID=hm@ranges@NAMES,nearestgene=geneSym[overlap])
+        N <- 50
+        N <- 5
+        ndx <- order(tesm$P_VAL)[1:N]
+        tesm[ndx,]
     }
-    tes=readRDS("probeannotation.rds")
-    tesm <- merge(all.results1f,tes,by="probeID",sort=F)
+    tes=readRDS("docs/moba/probeannotation.rds")
+    tesm=tes
     save(tesm,file="tesm.RData")
-    N <- 50
-    N <- 5
-    ndx <- order(tesm$P_VAL)[1:N]
-    tesm[ndx,]
 }
 
 #########################
@@ -1083,13 +1108,14 @@ if (computerFlag=="cluster") {
 }
 
 
-load(paste(dirAnn,"tesm.RData",sep=""))
+#load(paste(dirAnn,"tesm.RData",sep=""))
 
 
 ## ------------------------
 #load(paste(dirAnn,"tmp_3.RData",sep=""))
 load(paste(dirAnn,"data.RData",sep=""))
-load(paste(dirAnn,"tesm.RData",sep=""))
+#load(paste(dirAnn,"tesm.RData",sep=""))
+tesm=readRDS("docs/moba/probeannotation.rds")
 tmp=rep(NA,nrow(tesm))
 ann2=data.frame(IlmnID=tesm$probeID,snp=tmp,snp50=tmp,stringsAsFactors=F)
 
@@ -1135,6 +1161,7 @@ for (fId in 1:length(modelList)) {
     
     
     all.results1=read.table(paste(dirRes,paste("ind.res_model",gsub("-","_",modelId),".txt",sep=""),sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    if (fId==1) iA=match(all.results1$probeID,tesm$probeID)
     cat("Statictic type:")
     print(table(all.results1$statisticType),exclude=NULL)
     pvaluesInter=qvaluesInter=deltabeta=deltabetaM=deltabetaF=rep(NA,nrow(all.results1))
@@ -1169,7 +1196,7 @@ for (fId in 1:length(modelList)) {
         all.results1f <- cbind(all.results1,qvalues,pvBonf,qvaluesInter,deltabeta,deltabetaM,deltabetaF)
     }
     
-    tbl2=cbind(all.results1[,c("probeID","BETA","SE","z.value","P_VAL")],qvalues,pvBonf,pvaluesInter,qvaluesInter,deltabeta,tesm$nearestgene,ann2[,c("snp","snp50")])
+    tbl2=cbind(all.results1[,c("probeID","BETA","SE","z.value","P_VAL")],qvalues,pvBonf,pvaluesInter,qvaluesInter,deltabeta,tesm$nearestgene[iA],ann2[iA,c("snp","snp50")])
     
     tbl1$model[fId]=modelId
     tbl1$numSig[fId]=sum(all.results1$qvalues<0.05,na.rm=T)
