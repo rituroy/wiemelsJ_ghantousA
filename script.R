@@ -413,18 +413,20 @@ save.image("tmp_3.RData")
 #}
 #rm(i)
 
-fName1="_moba"
-dirClin="data/"
-clin2=read.table(paste(dirClin,"epistructure",cohort,fName1,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-id=pdata$id[!pdata$id%in%clin2$id]
-if (length(id)!=0) {
-    tmp=clin2[1:length(id),]
-    for (k in 1:ncol(tmp)) tmp[,k]=NA
-    tmp$id=id
-    clin2=rbind(clin2,tmp)
+if (!subsetFlag%in%c("hisp","noHispWt")) {
+    fName1="_moba"
+    dirClin="data/"
+    clin2=read.table(paste(dirClin,"epistructure",cohort,fName1,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    id=pdata$id[!pdata$id%in%clin2$id]
+    if (length(id)!=0) {
+        tmp=clin2[1:length(id),]
+        for (k in 1:ncol(tmp)) tmp[,k]=NA
+        tmp$id=id
+        clin2=rbind(clin2,tmp)
+    }
+    pdata=cbind(pdata,clin2[match(paste(pdata$Beadchip,pdata$Position,sep="_"),clin2$id),grep("epistr",names(clin2))])
+    rm(clin2,tmp,id)
 }
-pdata=cbind(pdata,clin2[match(paste(pdata$Beadchip,pdata$Position,sep="_"),clin2$id),grep("epistr",names(clin2))])
-rm(clin2,tmp,id)
 
 for (k in 1:ncol(pdata)) {
     if (is.factor(pdata[,k])) pdata[,k]=as.character(pdata[,k])
@@ -500,7 +502,8 @@ jpeg(paste(output_dir, "componentsfilteredbeforeSVA.jpg",sep="/"))    ###PC plot
 barplot(propVarExpl[1:10],ylab='propn var expl',xlab='PC')
 invisible(dev.off())
 #pdataBatch <- pdata[,c(3,15,14,5,10,25,17:23)]    #### put indexes for technical and biological variables
-pdataBatch <- cbind(pdata,counts)[,c("caco","Gender","yob","ch_ageref","nRBC","CD8T","CD4T", "NK","Bcell","Mono","Gran",paste("epistr",1:5,sep=""),"Plate","Position")]    #### put indexes for technical and biological variables
+pdataBatch <- cbind(pdata,counts)
+pdataBatch <- pdataBatch[,which(names(pdataBatch)%in%c("caco","Gender","yob","ch_ageref","nRBC","CD8T","CD4T", "NK","Bcell","Mono","Gran",paste("epistr",1:5,sep=""),"Plate","Position"))]    #### put indexes for technical and biological variables
 
 variables <- colnames(pdataBatch)
 # assemble potential batch covariates plus other covs of interest
@@ -577,7 +580,8 @@ jpeg(paste(output_dir, "componentsfilteredpostSVA.jpg",sep="/"))
 barplot(propVarExpl[1:10],ylab='propn var expl',xlab='PC')
 invisible(dev.off())
 #pdataBatch <- pdata[,c(3,15,14,5,10,25,17:23)]    ##### use same variable indexes in PCs as before SVA
-pdataBatch <- cbind(pdata,counts)[,c("caco","Gender","yob","ch_ageref","nRBC","CD8T","CD4T", "NK","Bcell","Mono","Gran",paste("epistr",1:5,sep=""),"Plate","Position")]    #### put indexes for technical and biological variables
+pdataBatch <- cbind(pdata,counts)
+pdataBatch <- pdataBatch[,which(names(pdataBatch)%in%c("caco","Gender","yob","ch_ageref","nRBC","CD8T","CD4T", "NK","Bcell","Mono","Gran",paste("epistr",1:5,sep=""),"Plate","Position"))]    #### put indexes for technical and biological variables
 
 variables <- colnames(pdataBatch)
 # assemble potential batch covariates plus other covs of interest
