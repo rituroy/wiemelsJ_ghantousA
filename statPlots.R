@@ -24,15 +24,15 @@ if (computerFlag=="cluster") {
 }
 
 
-load(paste(dirAnn,"tesm.RData",sep=""))
+#load(paste(dirAnn,"tesm.RData",sep=""))
 
 
 ## ------------------------
-load("tmp_3.RData")
-load("data.RData")
-load("tesm.RData")
+#load(paste(dirAnn,"tmp_3.RData",sep=""))
+load(paste(dirAnn,"data.RData",sep=""))
+load(paste(dirAnn,"tesm.RData",sep=""))
 tmp=rep(NA,nrow(tesm))
-ann2=data.frame(IlmnID=tesm$IlmnID,snp=tmp,snp50=tmp,stringsAsFactors=F)
+ann2=data.frame(IlmnID=tesm$probeID,snp=tmp,snp50=tmp,stringsAsFactors=F)
 
 if (F) {
     nProbe=-1
@@ -57,6 +57,7 @@ fileList=fileList[1:2]
 modelList=c("1-i","1-ii","2a-i","2a-ii","2b-i","2b-ii","3b-i","3b-ii","3c-i","3c-ii","4b-i","4b-ii","4c-i","4c-ii")
 #modelList=modelList[c(1,14)]
 #modelList=modelList[c(14)]
+#modelList=modelList[1:10]
 
 
 
@@ -72,16 +73,16 @@ plotFlag="_onePlot"
 outlierFlag=T
 outlierFlag=F
 
-colIdEst="BETA"; colIdPV=c("P_VAL","qvalues"); 	pThres=0.05
-colIdEst="BETA"; colIdPV=c("P_VAL","P_VAL"); 	pThres=0.05
-colList=c("BETA","P_VAL","qvalues")
-colName=c("coef","pv","fdrBH")
-
 
 colIdEst="BETA"; colIdPV=c("pvaluesInter","Inter_P_VAL"); 	pThres=0.05
 colIdEst="BETA"; colIdPV=c("pvaluesInter","qvaluesInter"); 	pThres=0.05
 colList=c("BETA","P_VAL","qvalues","pvaluesInter","qvaluesInter")
 colName=c("coef","pv","fdrBH","pvInter","fdrBHInter")
+
+colIdEst="BETA"; colIdPV=c("P_VAL","qvalues"); 	pThres=0.05
+colIdEst="BETA"; colIdPV=c("P_VAL","P_VAL"); 	pThres=0.05
+colList=c("BETA","P_VAL","qvalues")
+colName=c("coef","pv","fdrBH")
 
 ann=tesm
 ann$keep=1
@@ -170,6 +171,7 @@ for (compId in modelList) {
     
 
     all.results1=read.table(paste(dirRes,paste("ind.res_model",gsub("-","_",modelId),".txt",sep=""),sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    iA1=match(all.results1$probeID,tesm$probeID)
     if ("Inter_P_VAL"%in%colList & !"Inter_P_VAL"%in%names(all.results1)) next
     #cat("Statictic type:")
     #print(table(all.results1$statisticType),exclude=NULL)
@@ -198,7 +200,7 @@ for (compId in modelList) {
     # selection <- sort(c(group1,group2))
     #deltabeta <- rowMeans(betas[,group1],na.rm = T)-rowMeans(betas[,group2],na.rm = T) #(Case - Control)
 
-    stat2=cbind(all.results1[,c("probeID","BETA","SE","z.value","P_VAL")],qvalues,pvBonf,pvaluesInter,qvaluesInter,deltabeta,tesm$nearestgene)
+    stat2=cbind(all.results1[,c("probeID","BETA","SE","z.value","P_VAL")],qvalues,pvBonf,pvaluesInter,qvaluesInter,deltabeta,tesm$nearestgene[iA1])
     names(stat2)[match(c("probeID"),names(stat2))]="cpgId"
 
     i=match(stat2$cpgId,ann$IlmnID)
