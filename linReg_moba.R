@@ -1,5 +1,6 @@
 ## Run script.R section 1 and 2 first
 ## Then run this with linReg_moba_script.txt
+## Set epistrFlag = F to exclude epistructure variables as in when considering only a particular ethnic/race group like "noHispWt"
 
 ###################################################  Models
 
@@ -13,6 +14,9 @@ if (F) {
     modelId="2b-ii"
     nProbe=101
 }
+
+epistrFlag=T
+epistrFlag=F
 
 cat("modelId: ",modelId,"\n\n",sep="")
 
@@ -88,7 +92,7 @@ switch(modelId,
     colId1=c("caco","Gender","ch_ageref","nRBC","CD8T","CD4T", "NK","Bcell","Mono",paste("epistr",1:5,sep=""))
 }
 )
-#colId1=colId1[-grep("epistr",colId1)]
+if (!epistrFlag) colId1=colId1[-grep("epistr",colId1)]
 
 #c("caco","Gender","yob","ch_ageref","nRBC","CD8T","CD4T", "NK","Bcell","Mono","Gran",paste("epistr",1:5,sep=""))
 

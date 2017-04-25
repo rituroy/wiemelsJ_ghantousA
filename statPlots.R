@@ -21,11 +21,29 @@ if (computerFlag=="cluster") {
 } else {
     dirAnn="results/moba/misc/"
     dirRes="results/moba/output/stat/"
+    dirRes="results/moba/allSamples/output/stat/"
+    dirRes="results/moba/noHispWt/output/stat/"
 }
 
+## ----------------------------------------------
+if (computerFlag=="cluster") {
+    ann <- read.delim(paste("data/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
+    snpVec <- read.table(paste("data/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+} else {
+    ann <- read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
+    snpVec <- read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    dmr <- read.table(paste("docs/SeungTae/leukemia.DMRs/leukemia.DMRs.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+}
+ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
+ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
+ann[,"CHR"]=as.integer(ann[,"CHR"])
+ann <- ann[,-match(c("AddressA_ID","AlleleA_ProbeSeq","AddressB_ID","AlleleB_ProbeSeq", "Next_Base",  "Color_Channel","Forward_Sequence","SourceSeq"),colnames(ann))]
+for (k in 1:ncol(ann)) if (class(ann[,k])=="factor") ann[,k]=as.character(ann[,k])
 
-#load(paste(dirAnn,"tesm.RData",sep=""))
-
+snpVec=snpVec[,1]
+ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
+ann$keep=0
+ann$keep[which(ann$snp==0 & ann$CHR%in%1:22)]=1
 
 ## ------------------------
 #load(paste(dirAnn,"tmp_3.RData",sep=""))
@@ -33,6 +51,9 @@ load(paste(dirAnn,"data.RData",sep=""))
 load(paste(dirAnn,"tesm.RData",sep=""))
 tmp=rep(NA,nrow(tesm))
 ann2=data.frame(IlmnID=tesm$probeID,snp=tmp,snp50=tmp,stringsAsFactors=F)
+
+ann=ann[match(tesm$probeID,ann$IlmnID),]
+ann$nearestgene=tesm$nearestgene
 
 if (F) {
     nProbe=-1
@@ -57,7 +78,7 @@ fileList=fileList[1:2]
 modelList=c("1-i","1-ii","2a-i","2a-ii","2b-i","2b-ii","3b-i","3b-ii","3c-i","3c-ii","4b-i","4b-ii","4c-i","4c-ii")
 #modelList=modelList[c(1,14)]
 #modelList=modelList[c(14)]
-#modelList=modelList[1:10]
+modelList=modelList[1:10]
 
 
 
@@ -66,6 +87,7 @@ modelList=c("1-i","1-ii","2a-i","2a-ii","2b-i","2b-ii","3b-i","3b-ii","3c-i","3c
 ####################################################################
 ####################################################################
 ## ----------------------------------------------
+library(qvalue)
 
 plotFlag=""
 plotFlag="_onePlot"
@@ -79,12 +101,12 @@ colIdEst="BETA"; colIdPV=c("pvaluesInter","qvaluesInter"); 	pThres=0.05
 colList=c("BETA","P_VAL","qvalues","pvaluesInter","qvaluesInter")
 colName=c("coef","pv","fdrBH","pvInter","fdrBHInter")
 
-colIdEst="BETA"; colIdPV=c("P_VAL","qvalues"); 	pThres=0.05
 colIdEst="BETA"; colIdPV=c("P_VAL","P_VAL"); 	pThres=0.05
+colIdEst="BETA"; colIdPV=c("P_VAL","qvalues"); 	pThres=0.05
 colList=c("BETA","P_VAL","qvalues")
 colName=c("coef","pv","fdrBH")
 
-ann=tesm
+#ann=tesm
 ann$keep=1
 
 ## -------------------
@@ -189,7 +211,10 @@ for (compId in modelList) {
         invisible(dev.off())
     }
     
-    qvalues <- p.adjust(all.results1$P_VAL,method="BH")
+    #qvalues <- p.adjust(all.results1$P_VAL,method="BH")
+    i=which(!is.na(all.results1$P_VAL))
+    qvalues <- rep(NA,nrow(all.results1))
+    qvalues[i] <- qvalue(all.results1$P_VAL[i])$qvalues
     pvBonf <- p.adjust(all.results1$P_VAL,method="bonferroni")
     if ("Inter_P_VAL"%in%names(all.results1)) {
         pvaluesInter <- all.results1$Inter_P_VAL
