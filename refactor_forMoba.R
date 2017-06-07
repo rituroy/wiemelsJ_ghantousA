@@ -1,28 +1,45 @@
 ## Run script.R section 1 first
 
 ####################################################################
+## ---------------------------------
 
-cohort="_allGuthSet2"
-cohort="_noHispWt_allGuthSet2"
+computerFlag="cluster"
+computerFlag=""
 
-
-baseDir="data/set2/idat/"
-#pdata=read.table("data/set2/clinGuthrieReplJune2012.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-pdata=read.table("data/set2/clin_guthrieSet2_20140619.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-tbl=read.table("data/meth_yrbirth.csv",sep=",",h=T,quote="",comment.char="",as.is=T,fill=T)
-pdata$yob=NA
-j=match(pdata$subjectID,tbl$subjectid); j1=which(!is.na(j)); j2=j[j1]
-pdata$yob[j1]=tbl$ch_birth_year[j2]
-
-
-if (length(grep("_allGuthSet2",cohort))==1) {
-    # "0855G" - T-ALL
-    pdata=pdata[which(!is.na(pdata$guthrieId) & !pdata$guthrieId%in%c("1458G","1762G","0635G","1588G","0855G")),]
+if (computerFlag=="cluster") {
+    setwd("/home/royr/project/JoeWiemels")
+} else {
+    dirSrc="/Users/royr/UCSF/"
+    dirSrc2=dirSrc
+    setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
 }
-if (length(grep("_noHispWt",cohort))==1) {
-    pdata=pdata[which(pdata$int_ch_ethnicity==2),]
+
+
+## ---------------------------------
+
+####################################################################
+
+if (F) {
+    cohort="_noHispWt_allGuthSet2"
+    cohort="_allGuthSet2"
+
+
+    #pdata=read.table("data/set2/clinGuthrieReplJune2012.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    pdata=read.table("data/set2/clin_guthrieSet2_20140619.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    tbl=read.table("data/meth_yrbirth.csv",sep=",",h=T,quote="",comment.char="",as.is=T,fill=T)
+    pdata$yob=NA
+    j=match(pdata$subjectID,tbl$subjectid); j1=which(!is.na(j)); j2=j[j1]
+    pdata$yob[j1]=tbl$ch_birth_year[j2]
+
+    if (length(grep("_allGuthSet2",cohort))==1) {
+        # "0855G" - T-ALL
+        pdata=pdata[which(!is.na(pdata$guthrieId) & !pdata$guthrieId%in%c("1458G","1762G","0635G","1588G","0855G")),]
+    }
+    if (length(grep("_noHispWt",cohort))==1) {
+        pdata=pdata[which(pdata$int_ch_ethnicity==2),]
+    }
+    pdata$Basename=paste("/",pdata$Beadchip,"/",pdata$Beadchip,"_",pdata$Position,sep="")
 }
-pdata$Basename=paste("/",pdata$Beadchip,"/",pdata$Beadchip,"_",pdata$Position,sep="")
 
 ####################################################################
 ####################################################################
@@ -57,17 +74,8 @@ library(IlluminaHumanMethylation450kmanifest)
 library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 
 
-
-load("tmp_3.RData")
-
 ####################################################################
 ####################################################################
-## ---------------------------------
-
-computerFlag=""
-computerFlag="cluster"
-
-## ---------------------------------
 
 nProbe=101
 nProbe=10001
@@ -85,15 +93,17 @@ datType="_aml"; subsetName2=""
 datType="_allGuthSet1"; subsetName2=""
 datType="_allGuthSet2"; subsetName2=""
 
+cohort=datType
+
 setFlag=ifelse(subsetName2=="",tolower(sub("allGuth","",datType)),subsetName2)
 
 subsetFlag="case"
 subsetFlag="ctrl"
 
-subsetFlag=""
 #subsetFlag="noHisp"
 subsetFlag="hisp"
 subsetFlag="noHispWt"
+subsetFlag=""
 
 covFlag=""
 mediationFlag=F
@@ -103,6 +113,15 @@ winsorTail=0.05
 
 library(limma)
 library(FactoMineR)
+
+load(paste("tmp_3",cohort,subsetFlag,".RData",sep=""))
+
+## ---------------------------------
+
+computerFlag="cluster"
+computerFlag=""
+
+## ---------------------------------
 
 # Functions
 #------------------
@@ -146,14 +165,6 @@ impute_mean <- function(x) {
 
 ##############################################
 
-if (computerFlag=="cluster") {
-    setwd("/home/royr/project/JoeWiemels")
-} else {
-    dirSrc="/Users/royr/UCSF/"
-    dirSrc2=dirSrc
-    setwd(paste(dirSrc2,"JoeWiemels/leukMeth",sep=""))
-}
-
 subsetName=subsetFlag
 if (subsetFlag!="") {
     #varFlag=paste(varFlag,"_",subsetFlag,"Subset",sep="")
@@ -184,6 +195,7 @@ if (computerFlag=="cluster") {
     dirBW="data/"
     dirCom=dirMeth
     dirRefactor=dirEpistructure=dirMeth
+    dirMoba="data/"
     switch(datType,
     "_allGuthSet2"={
         dirMeth=dirClin="data/set2/"
@@ -232,6 +244,7 @@ if (computerFlag=="cluster") {
     dirCom="docs/all/"
     #dirRefactor="docs/SemiraGonsethNussle/refactor/"
     dirEpistructure="docs/SemiraGonsethNussle/epistructure/"
+    dirMoba="docs/moba/"
     switch(datType,
     "_allGuthSet2"={
         dirMeth=dirClin="docs/all/set2/"
@@ -275,18 +288,20 @@ if (computerFlag=="cluster") {
 
 ## ----------------------------------------------
 if (T) {
-    if (computerFlag=="") {
+    if (F) {
+        #if (computerFlag=="") {
         load(file="ann.RData")
-        crp_probes <- "docs/Crossreactive_probes.csv"       ###add the path to the csv file
     } else {
         if (computerFlag=="cluster") {
             ann=read.delim(paste("data/","HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
             #snpVec=read.table(paste("data/CpGs to exclude_FINAL.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
             snpVec=read.table(paste("data/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            crp_probes <- "data/Crossreactive_probes.csv"       ###add the path to the csv file
         } else {
             ann=read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
             #snpVec=read.table(paste("docs/ShwetaChoudhry/CpGs to exclude_FINAL.txt",sep=""),sep="\t",h=F,quote="",comment.char="",as.is=T,fill=T)
             snpVec=read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+            crp_probes <- paste(dirMoba,"Crossreactive_probes.csv",sep="")       ###add the path to the csv file
         }
         ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
         ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
@@ -299,7 +314,6 @@ if (T) {
         
         snpVec=snpVec[,1]
         ann$snp=0; ann$snp[which(ann$IlmnID%in%snpVec)]=1
-        crp_probes <- "data/Crossreactive_probes.csv"       ###add the path to the csv file
     }
     
     
@@ -324,7 +338,7 @@ rm(betas,pdata)
 # ------------------------
 
 
-if (T) {
+if (F) {
     ## Find sample outliers
     
     #load("tmp.RData")
@@ -339,29 +353,40 @@ if (T) {
 	betaThis <- betaThis[CpG_to_keep,IDs_to_keep]
 	betaThis=t(betaThis)
 	R_est <- PCA(betaThis, graph = F, ncp =6)
-	save(R_est,file=paste("R_est_init",ifelse(subsetFlag=="","","_"),subsetFlag,datType,fName1,".RData",sep=""))
+	save(R_est,file=paste("R_est_init",cohort,subsetFlag,fName1,".RData",sep=""))
     
+    ## For locus-based analysis where sva model = ~ caco + plate + position
+    limAll=c(-2000,1000)
     limThis=c(-200,200)
     limThis=c(-250,250)
     limThis=c(-300,300)
+    
+    ## For region-based analysis where sva model = ~ caco + gender
+    limAll=c(-10,10)
+    limThis=c(-6,6)
+    limAll=c(-2000,1000)
+    limThis=c(-200,200)
+    limThis=c(-250,250)
+    limThis=c(-300,300)
+
 	Refactor_dat <- R_est$ind$coord[,c(1:6)]
 	png("pca_1.png")
-	plot(R_est,xlim=c(-2000,1000),ylim=c(-2000,1000))
+	plot(R_est,xlim=limAll,ylim=limAll)
 	abline(c(0,1),lty="dotted")
 	dev.off()
     ## Outliers are those outside the dotted lines
 	png("pca_1_1.png")
-	plot(R_est$ind$coord[,1],R_est$ind$coord[,2],xlim=c(-2000,1000),ylim=c(-2000,1000))
+	plot(R_est$ind$coord[,1],R_est$ind$coord[,2],xlim=limAll,ylim=limAll)
 	abline(c(0,1),lty="dotted"); abline(h=0,lty="dotted"); abline(v=0,lty="dotted")
 	abline(h=limThis,lty="dotted")
 	abline(v=limThis,lty="dotted")
 	dev.off()
 	png("pca_1_2.png")
-	plot(R_est,xlim=c(-2000,1000),ylim=c(-2000,1000),label="none")
+	plot(R_est,xlim=limAll,ylim=limAll,label="none")
 	abline(c(0,1),lty="dotted")
 	dev.off()
 
-    #load(file=paste("R_est_init",ifelse(subsetFlag=="","","_"),subsetFlag,datType,fName1,".RData",sep=""))
+    #load(file=paste("R_est_init",cohort,subsetFlag,fName1,".RData",sep=""))
     table((abs(R_est$ind$coord[,1])>limThis[2] | abs(R_est$ind$coord[,2])>limThis[2]))
     ## Outliers
 	paste(rownames(R_est$ind$coord)[which(abs(R_est$ind$coord[,1])>limThis[2] | abs(R_est$ind$coord[,2])>limThis[2])],collapse=",")
@@ -384,7 +409,11 @@ if (F) {
         IDs_to_keep=which(!colnames(betaThis)%in%c("X1288G","X1466G","X0153G","X0077G","X0201G","X1191G","X1264G","X1219G","X0873G","X0927G","X1075G","X1766G","X0691G"))
     }
 }
-load(file=paste("R_est_init",ifelse(subsetFlag=="","","_"),subsetFlag,datType,fName1,".RData",sep=""))
+load(file=paste("R_est_init",cohort,subsetFlag,fName1,".RData",sep=""))
+## For locus-based analysis where sva model = ~ caco + plate + position
+limThis=c(-300,300)
+## For region-based analysis where sva model = ~ caco + gender
+limThis=c(-6,6)
 limThis=c(-300,300)
 IDs_to_keep=which(abs(R_est$ind$coord[,1])<=limThis[2] & abs(R_est$ind$coord[,2])<=limThis[2])
 
@@ -435,8 +464,8 @@ x2_proc <- mean_x2[mean_x2 < 0.9 & mean_x2 > 0.1]
 
 betaThis <- x2[which(rownames(x2) %in% names(x2_proc)),]
 
-#save(betaThis, file = paste("beta_matrix",ifelse(subsetFlag=="","","_"),subsetFlag,datType,fName1,".RData",sep=""))
-#load(file = paste("beta_matrix",ifelse(subsetFlag=="","","_"),subsetFlag,datType,fName1,".RData",sep=""))
+#save(betaThis, file = paste("beta_matrix",cohort,subsetFlag,fName1,".RData",sep=""))
+#load(file = paste("beta_matrix",cohort,subsetFlag,fName1,".RData",sep=""))
 
 # refactor from Elior''s matlab code
 
@@ -444,6 +473,7 @@ betaThis <- x2[which(rownames(x2) %in% names(x2_proc)),]
 # ---------------------------------
 
 O_prime <- (betaThis)
+#O_prime <- t(betaThis)
 
 # z score
 zscore <- function(x){
@@ -459,7 +489,7 @@ res_PCA <- princomp(z_norm_O_prime)
 Sys.time() - t0
 
 
-save(res_PCA, file = paste("res_PCA_for_reFACTOR",ifelse(subsetFlag=="","","_"),subsetFlag,datType,fName1,".RData",sep=""))
+save(res_PCA, file = paste("res_PCA_for_reFACTOR",cohort,subsetFlag,fName1,".RData",sep=""))
 
 # Compute a low rank approximation of input data and rank sites...
 # ---------------------------------
@@ -519,7 +549,7 @@ R_est <- PCA(t_O_sites_zs, graph = F, ncp =6)
 
 Refactor_dat <- R_est$ind$coord[,c(1:6)]
 
-save(Refactor_dat, file = paste("Refactor_dat",ifelse(subsetFlag=="","","_"),subsetFlag,datType,fName1,".RData",sep=""))
+save(Refactor_dat, file = paste("Refactor_dat",cohort,subsetFlag,fName1,".RData",sep=""))
 
-#load(file = paste("Refactor_dat",ifelse(subsetFlag=="","","_"),subsetFlag,datType,fName1,".RData",sep=""))
+#load(file = paste("Refactor_dat",cohort,subsetFlag,fName1,".RData",sep=""))
 

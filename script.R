@@ -28,12 +28,12 @@ cohort="_allGuthSet2"
 subsetFlag="_ctrl"
 subsetFlag="_case"
 
+#subsetFlag="_noHisp"
+subsetFlag="_hisp"
+subsetFlag="_noHispWt"
 subsetFlag=""
-#subsetFlag="noHisp"
-subsetFlag="hisp"
-subsetFlag="noHispWt"
 
-subsetName=ifelse(subsetFlag=="",subsetFlag,paste(subsetFlag,"Subset",sep=""))
+subsetName=ifelse(subsetFlag=="",subsetFlag,paste(sub("_","",subsetFlag),"Subset",sep=""))
 
 ### R code from vignette source 'vignettes/minfi/inst/doc/minfi.Rnw'
 
@@ -47,6 +47,7 @@ if (F) {
 }
 
 if (computerFlag=="cluster") {
+    dirMoba="data/"
     if (cohort=="_allGuthSet1") {
         baseDir="data/set1/idat/"
         targets=read.table("data/set1/clin_allGuthSet1_20160928.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
@@ -58,6 +59,7 @@ if (computerFlag=="cluster") {
         baseDir="data/set2/idat/"
         #targets=read.table("data/set2/clinGuthrieReplJune2012.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         targets=read.table("data/set2/clin_guthrieSet2_20140619.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        targets$id=paste("X",targets$guthrieId,sep="")
         tbl=read.table("data/meth_yrbirth.csv",sep=",",h=T,quote="",comment.char="",as.is=T,fill=T)
         targets$yob=NA
         j=match(targets$subjectID,tbl$subjectid); j1=which(!is.na(j)); j2=j[j1]
@@ -147,6 +149,7 @@ if (computerFlag=="cluster") {
         targets=cbind(targets,tbl4[,c("sampleGroup","Beadchip","Position")])
     }
 } else {
+    dirMoba="docs/moba/"
     if (cohort=="_allGuthSet1") {
         baseDir="docs/all/set1/idat/"
         #baseDir="docs/all/set1/idat/6057833042/"
@@ -155,7 +158,9 @@ if (computerFlag=="cluster") {
         names(targets)[match(c("Position1"),names(targets))]=c("Position")
     } else if (cohort=="_allGuthSet2") {
         baseDir="docs/all/set2/idat/"
-        targets=read.table("docs/all/set2/clinGuthrieReplJune2012.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        #targets=read.table("docs/all/set2/clinGuthrieReplJune2012.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        targets=read.table("docs/all/set2/clin_guthrieSet2_20140619.txt",sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        targets$id=paste("X",targets$guthrieId,sep="")
         tbl=read.table("docs/all/meth_yrbirth.csv",sep=",",h=T,quote="",comment.char="",as.is=T,fill=T)
         targets$yob=NA
         j=match(targets$subjectID,tbl$subjectid); j1=which(!is.na(j)); j2=j[j1]
@@ -168,7 +173,7 @@ if (cohort%in%c("_allGuthSet2","_allGuthSet1Set2")) {
     targets=targets[which(!is.na(targets$guthrieId) & !targets$guthrieId%in%c("1458G","1762G","0635G","1588G","0855G")),]
 }
 targets$Basename=paste("/",targets$Beadchip,"/",targets$Beadchip,"_",targets$Position,sep="")
-if (subsetFlag=="noHispWt") {targets=targets[which(targets$int_ch_ethnicity==2),]}
+if (subsetFlag=="_noHispWt") {targets=targets[which(targets$int_ch_ethnicity==2),]}
 
 if (F) {
     #list.files(baseDir)
@@ -227,7 +232,7 @@ pdata$Gender[which(pdata$sex==1)]="M"
 pdata$Gender[which(pdata$sex==2)]="F"
 
 #RGSetraw <- read.metharray.exp(base = baseDir, targets = pdata)
-load("rgsetRaw_allGuthSet2.RData")
+load(paste("rgsetRaw",cohort,".RData",sep=""))
 RGSetraw <- rgsetRaw
 rm(rgsetRaw)
 #RGSetraw <- read.metharray.exp(base = baseDir, targets = pdata, recursive=T)
@@ -237,7 +242,7 @@ rm(rgsetRaw)
 j=match(sampleNames(RGSetraw),paste(pdata$Beadchip,"_",pdata$Position,sep="")); j1=which(!is.na(j)); j2=j[j1]
 RGSetraw=RGSetraw[,j1]
 pdata=pdata[j2,]
-#save(RGSetraw,file=paste("RGSetraw",cohort,".RData",sep=""))
+#save(RGSetraw,file=paste("RGSetraw",cohort,subsetFlag,".RData",sep=""))
 
 colId1=c("caco","Gender","yob","ch_ageref","nRBC","CD8T","CD4T", "NK","Bcell","Mono","Gran",paste("epistr",1:5,sep=""),"Plate","Position")
 colId1=c("caco","Gender","yob","ch_ageref","Plate","Position")
@@ -250,23 +255,23 @@ pdata=pdata[j,]
 
 ########### estimate cell counts
 counts <- estimateCellCounts(RGSetraw,compositeCellType = "CordBlood",cellTypes=c("nRBC","CD8T","CD4T", "NK","Bcell","Mono","Gran"),meanPlot=FALSE)
-save(counts, file=paste0(output_dir,"Test.CordBlood.CellType.nRBC.Rdata"))
+save(counts, file=paste0(output_dir,paste("Test.CordBlood.CellType.nRBC",cohort,subsetFlag,".Rdata",sep="")))
 
 #####
 rawbetas <- getBeta(RGSetraw)
 
 probNAcont <- which(apply(rawbetas,1,function(i) sum(!is.finite(i)))>0)   ##### check for NAs and save for later
 
-write.table(rawbetas, file=paste(output_dir, "betas.csv",sep="/"), row.names=T, sep="\t")
+write.table(rawbetas, file=paste(output_dir, "/betas",cohort,subsetFlag,".csv",sep=""), row.names=T, sep="\t")
 
-save.image("tmp_1.RData")
+save.image(paste("tmp_1",cohort,subsetFlag,".RData",sep=""))
 
 ##################QC Steps
 ######change aesthetics (e.g. sampGroups, sampNames) according to the specific need
 
 MSet <- preprocessRaw(RGSetraw)
 
-save.image("tmp_2.RData")
+save.image(paste("tmp_2",cohort,subsetFlag,".RData",sep=""))
 
 estimate_mode <- function(x) {
     d <- density(x,na.rm=T)
@@ -283,7 +288,7 @@ guthrieId   Beadchip Position
 x=rep("Good",length(x2)); x[(x2>.2 & x2<.8)]="Bad"
 
 qc <- getQC(MSet)
-jpeg(paste(output_dir, "plotQC.jpg",sep="/"), width=800, height=800)
+jpeg(paste(output_dir,"/plotQC",cohort,subsetFlag,".jpg",sep=""), width=800, height=800)
 plotQC(qc,badSampleCutoff=11)
 invisible(dev.off())
 
@@ -297,26 +302,26 @@ guthrieId   Beadchip Position
 214     1338G 9702496086   R05C02
 "
 
-jpeg(paste(output_dir, "methylated.jpg",sep="/"), width=800, height=800)
+jpeg(paste(output_dir, "/methylated",cohort,subsetFlag,".jpg",sep=""), width=800, height=800)
 boxplot(log(RGSetraw@assayData$Red+1)[,order(colnames(rawbetas))], main="methylated (Red channel)", las=2, cex.axi=0.8)
 invisible(dev.off())
 
-jpeg(paste(output_dir, "unmethylated.jpg",sep="/"), width=800, height=800)
+jpeg(paste(output_dir, "/unmethylated",cohort,subsetFlag,".jpg",sep=""), width=800, height=800)
 boxplot(log(RGSetraw@assayData$Green+1)[,order(colnames(rawbetas))], main="unmethylated (Green channel)", las=2, cex.axi=0.8)
 invisible(dev.off())
 
-jpeg(paste(output_dir, "densityPlot.jpg",sep="/"), width=800, height=800)
+jpeg(paste(output_dir, "/densityPlot",cohort,subsetFlag,".jpg",sep=""), width=800, height=800)
 #densityPlot(rawbetas, sampGroups = pdata$Cohort)
 densityPlot(rawbetas, sampGroups = x)
 invisible(dev.off())
 
-jpeg(paste(output_dir, "densityBeanPlot.jpg",sep="/"), width=800, height=800)
+jpeg(paste(output_dir, "/densityBeanPlot",cohort,subsetFlag,".jpg",sep=""), width=800, height=800)
 #densityBeanPlot(rawbetas, sampGroups = pdata$Cohort)
 densityBeanPlot(rawbetas, sampGroups = x)
 invisible(dev.off())
 
 
-jpeg(paste(output_dir, "mdsPlot.jpg",sep="/"), width=800, height=800)
+jpeg(paste(output_dir, "/mdsPlot",cohort,subsetFlag,".jpg",sep=""), width=800, height=800)
 if (dim(pdata)[1] < 50 ) {
     mdsPlot(rawbetas,numPositions=1000,sampGroups=as.character(pdata$Gender),
     legendPos = "bottomleft",sampNames=1:215)
@@ -346,7 +351,7 @@ Gender <- which(colnames(pdata)=="Gender")
 suppressWarnings(RGset <- preprocessFunnorm(RGSetraw, sex=pdata[,Gender]))
 
 ########################remove unwanted probes (cross reactive probes)
-crp_probes <- "data/Crossreactive_probes.csv"       ###add the path to the csv file
+crp_probes <- paste(dirMoba,"Crossreactive_probes.csv",sep="")       ###add the path to the csv file
 cross_reactive <- read.table(crp_probes, header=F, sep="\t")$V1
 RGset <- RGset[ ! featureNames(RGset)%in%cross_reactive,]
 
@@ -381,20 +386,20 @@ if (F) {
 }
 
 #######################save
-write.table(betas, file=paste(output_dir, "betas.filtered.csv",sep="/"), row.names=T, sep="\t")
-write.table(pdata, file=paste(output_dir, "pdata.txt",sep="/"), row.names=F, sep="\t")
+write.table(betas, file=paste(output_dir, "/betas.filtered",cohort,subsetFlag,".csv",sep=""), row.names=T, sep="\t")
+write.table(pdata, file=paste(output_dir, "/pdata",cohort,subsetFlag,".txt",sep=""), row.names=F, sep="\t")
 
 ######some QC graphs after normalization
-jpeg(paste(output_dir, "densityPlot2.jpg",sep="/"), width=800, height=800)
+jpeg(paste(output_dir, "/densityPlot2",cohort,subsetFlag,".jpg",sep=""), width=800, height=800)
 #densityPlot(betas, sampGroups = pdata$Sample_Plate)
 densityPlot(betas, sampGroups = x)
 invisible(dev.off())
 
-jpeg(paste(output_dir, "densityBeanPlot2.jpg",sep="/"), width=800, height=800)
+jpeg(paste(output_dir, "/densityBeanPlot2",cohort,subsetFlag,".jpg",sep=""), width=800, height=800)
 densityBeanPlot(betas, sampGroups = pdata$Cov1)
 invisible(dev.off())
 
-jpeg(paste(output_dir, "mdsPlot2.jpg",sep="/"), width=800, height=800)
+jpeg(paste(output_dir, "/mdsPlot2",cohort,subsetFlag,".jpg",sep=""), width=800, height=800)
 if (dim(pdata)[1] < 50 ) {
     mdsPlot(betas,numPositions=1000,sampGroups=pdata$Gender,
     legendPos = "bottomleft",sampNames=1:215)
@@ -404,7 +409,7 @@ if (dim(pdata)[1] < 50 ) {
 invisible(dev.off())
 
 
-save.image("tmp_3.RData")
+save.image(paste("tmp_3",cohort,subsetFlag,".RData",sep=""))
 
 ####################################################################
 ####################################################################
@@ -421,10 +426,14 @@ save.image("tmp_3.RData")
 #}
 #rm(i)
 
-if (!subsetFlag%in%c("hisp","noHispWt")) {
+if (!subsetFlag%in%c("_hisp","_noHispWt")) {
     fName1="_moba"
-    dirClin="data/"
-    clin2=read.table(paste(dirClin,"epistructure",cohort,fName1,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    if (computerFlag=="cluster") {
+        dirClin="data/"
+    } else {
+        dirClin="./"
+    }
+    clin2=read.table(paste(dirClin,"epistructure",cohort,subsetFlag,fName1,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     id=pdata$id[!pdata$id%in%clin2$id]
     if (length(id)!=0) {
         tmp=clin2[1:length(id),]
@@ -452,7 +461,7 @@ for (k in which(names(pdata)%in%c("caco","Gender","yob","ch_ageref","nRBC","CD8T
 
 ## ----------------------------------------------
 if (T) {
-    if (computerFlag=="") {
+    if (F) {
         load(file="ann.RData")
     } else {
         if (computerFlag=="cluster") {
@@ -506,7 +515,7 @@ pca <- prcomp(invlgBetas,scale=T)
 # plot proportion of var explained
 propVarExpl <- summary(pca)$importance[2,]
 
-jpeg(paste(output_dir, "componentsfilteredbeforeSVA.jpg",sep="/"))    ###PC plot
+jpeg(paste(output_dir, "/componentsfilteredbeforeSVA",cohort,subsetFlag,".jpg",sep=""))    ###PC plot
 barplot(propVarExpl[1:10],ylab='propn var expl',xlab='PC')
 invisible(dev.off())
 #pdataBatch <- pdata[,c(3,15,14,5,10,25,17:23)]    #### put indexes for technical and biological variables
@@ -554,19 +563,21 @@ for (name in PCnames) {
 
 batch <- list(pVals=batch_corr_pVals, data=batch_data)
 ################## Tables of PCs*covariates
-write.table(cbind(variable=rownames(batch$pVals),batch$pVals), file=paste(output_dir,"batchfilteredbeforeSVA.txt",sep="/"), row.names=T, sep="\t")
+write.table(cbind(variable=rownames(batch$pVals),batch$pVals), file=paste(output_dir,"/batchfilteredbeforeSVA",cohort,subsetFlag,".txt",sep=""), row.names=T, sep="\t")
 
 ########################## SVA
 meth <- beta2m(betas)    #### transformation from beta-values to m-values
 meth[!is.finite(meth)] <- min(meth[is.finite(meth)])
 #variables <- colnames(pdata)[c(10,3,14)]   ######variable of interest (Case/Control) + technical covariates
-variables <- c("caco","Plate","Position")   ######variable of interest (Case/Control) + technical covariates
+#variables <- c("caco","Plate","Position")   ######variable of interest (Case/Control) + technical covariates
+variables <- c("caco","Gender")   ######variable of interest (Case/Control) + technical covariates
 
 formula1 <- as.formula(paste("~ " ,paste(variables,collapse="+")))
 design <- model.matrix(formula1,data=pdata)
 
 #formula0 <- as.formula(paste("~ 0+", paste(variables[-1],collapse="+")))
-formula0 <- as.formula(paste("~ ", paste(variables[-1],collapse="+")))
+#formula0 <- as.formula(paste("~ ", paste(variables[-1],collapse="+")))
+formula0 <- as.formula(paste("~ 1"))
 model0 <- model.matrix(formula0, data=pdata)
 sva <- sva(meth,design,model0)
 
@@ -584,7 +595,7 @@ pca <- prcomp(invlgBetas,scale=T)
 # plot proportion of var explained
 propVarExpl <- summary(pca)$importance[2,]
 
-jpeg(paste(output_dir, "componentsfilteredpostSVA.jpg",sep="/"))
+jpeg(paste(output_dir, "/componentsfilteredpostSVA",cohort,subsetFlag,".jpg",sep=""))
 barplot(propVarExpl[1:10],ylab='propn var expl',xlab='PC')
 invisible(dev.off())
 #pdataBatch <- pdata[,c(3,15,14,5,10,25,17:23)]    ##### use same variable indexes in PCs as before SVA
@@ -631,7 +642,7 @@ for (name in PCnames) {
 }
 
 batch <- list(pVals=batch_corr_pVals, data=batch_data)
-write.table(batch$pVals, file=paste(output_dir,"batchfilteredpostSVA.txt",sep="/"), row.names=T, sep="\t")
+write.table(batch$pVals, file=paste(output_dir,"/batchfilteredpostSVA",cohort,subsetFlag,".txt",sep=""), row.names=T, sep="\t")
 
 ##########################################
 ############## e.g. of choice of indexes for exclusion
@@ -672,18 +683,18 @@ meth <- betas_adjSVA   #use betas after SVA
 system.time(OutlierResults <- removeOutliers(meth))
 meth.2 <- OutlierResults[[1]]
 Log <- OutlierResults[[2]]
-save(Log,file="output/Outlier_logBW.Rdata") #save log
+save(Log,file=paste("output/Outlier_logBW",cohort,subsetFlag,".Rdata",sep="")) #save log
 
 tdat <- t(meth.2)     ##### this matrix will be used for the regression models
 
-save(tdat,pdata,counts,file="data.RData")
-write.table(pdata,file=paste("pdata.txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
-write.table(cbind(id=rownames(counts),counts),file=paste("counts.txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
-write.table(cbind(cpgId=rownames(meth.2),as.data.frame(meth.2)),file=paste("meth.2.txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
-#write.table(cbind(cpgId=rownames(meth.2)[1:101],as.data.frame(meth.2[1:101,])),file=paste("meth.2.txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+save(tdat,pdata,counts,file=paste("data",cohort,subsetFlag,".RData",sep=""))
+write.table(pdata,file=paste("pdata",cohort,subsetFlag,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+write.table(cbind(id=rownames(counts),counts),file=paste("counts",cohort,subsetFlag,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+write.table(cbind(cpgId=rownames(meth.2),as.data.frame(meth.2)),file=paste("meth.2",cohort,subsetFlag,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+#write.table(cbind(cpgId=rownames(meth.2)[1:101],as.data.frame(meth.2[1:101,])),file=paste("meth.2",cohort,subsetFlag,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
 
 meth.2 <- t(tdat)     ##### this matrix will be used for the regression models
-write.table(cbind(cpgId=rownames(meth.2),as.data.frame(meth.2)),file=paste("meth.2.txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+write.table(cbind(cpgId=rownames(meth.2),as.data.frame(meth.2)),file=paste("meth.2",cohort,subsetFlag,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
 
 
 ######################################################### SUMMARIZE PROBES
@@ -695,7 +706,7 @@ descriptives <- function(x) {
 }
 
 desc <- t(apply(tdat,2,descriptives))
-write.table(desc, file = paste(output_dir,"/MOBA3_Descriptives.txt", sep = ""),
+write.table(desc, file = paste(output_dir,"/MOBA3_Descriptives",cohort,subsetFlag,".txt", sep = ""),
 sep = "\t", col.names = T, row.names = T, append = F, quote=FALSE)
 
 
@@ -806,7 +817,7 @@ if (F) {
     tesm[ndx,]
     i=which(tesm$geneSym!="")
     mean(tesm$geneSym[i]==tesm$nearestgene[i])
-    save(tesm,file="tesm.RData")
+    save(tesm,file=paste("tesm",cohort,subsetFlag,".RData",sep=""))
 }
 
 #######################
@@ -820,21 +831,21 @@ if (T) {
         nProbe=10001
         nProbe=-1
 
-        tdat=read.table(paste("meth.2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+        tdat=read.table(paste("meth.2",cohort,subsetFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
         rownames(tdat)=tdat$cpgId
         tdat=tdat[,-1]
         tdat=as.matrix(tdat)
         tdat=t(tdat)
         
-        pdata=read.table(paste("pdata.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        pdata=read.table(paste("pdata",cohort,subsetFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         
-        counts=read.table(paste("counts.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        counts=read.table(paste("counts",cohort,subsetFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         rownames(counts)=counts$id
         counts=as.matrix(counts[,-1])
         
-        save(tdat,pdata,counts,file="data.RData")
+        save(tdat,pdata,counts,file=paste("data",cohort,subsetFlag,".RData",sep=""))
         
-        load(paste(dirAnn,"data.RData",sep=""))
+        load(paste(dirAnn,"data",cohort,subsetFlag,".RData",sep=""))
         betas=t(tdat)
         rm(tdat,counts)
         
@@ -844,8 +855,8 @@ if (T) {
         
         datadir=""
         datadir="results/moba/output/stat/"
-        #all.results1=read.table(paste("ind.res_model",gsub("-","_",modelId),".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-        all.results1=read.table(paste(datadir,"ind.res_model",gsub("-","_",modelId),".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        #all.results1=read.table(paste("ind.res_model",gsub("-","_",modelId),cohort,subsetFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+        all.results1=read.table(paste(datadir,"ind.res_model",gsub("-","_",modelId),cohort,subsetFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
         
         
         output_dir="tmp"
@@ -924,7 +935,7 @@ if (T) {
     }
     tes=readRDS("docs/moba/probeannotation.rds")
     tesm=tes
-    save(tesm,file="tesm.RData")
+    save(tesm,file=paste("tesm",cohort,subsetFlag,".RData",sep=""))
 }
 
 #########################
@@ -1064,7 +1075,7 @@ cgi.all <- get_cgi_annotation(genome)
 txdb <- getTxdb(genome)
 GBM$dmr <- table$name
 GBM$b <- table$meanbetafc
-save(GBM,file="/tmp/gbm.r")
+save(GBM,file=paste("/tmp/gbm",cohort,subsetFlag,".R",sep=""))
 
 print("GGI distribution")
 df1 <- cgi_distribution(GBM, cgi.all)
@@ -1108,28 +1119,28 @@ if (computerFlag=="cluster") {
 }
 
 
-#load(paste(dirAnn,"tesm.RData",sep=""))
+#load(paste(dirAnn,"tesm",cohort,subsetFlag,".RData",sep=""))
 
 
 ## ------------------------
-#load(paste(dirAnn,"tmp_3.RData",sep=""))
-load(paste(dirAnn,"data.RData",sep=""))
-#load(paste(dirAnn,"tesm.RData",sep=""))
+#load(paste(dirAnn,"tmp_3",cohort,subsetFlag,".RData",sep=""))
+load(paste(dirAnn,"data",cohort,subsetFlag,".RData",sep=""))
+#load(paste(dirAnn,"tesm",cohort,subsetFlag,".RData",sep=""))
 tesm=readRDS("docs/moba/probeannotation.rds")
 tmp=rep(NA,nrow(tesm))
 ann2=data.frame(IlmnID=tesm$probeID,snp=tmp,snp50=tmp,stringsAsFactors=F)
 
 if (F) {
     nProbe=-1
-    tdat=read.table(paste("meth.2.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
+    tdat=read.table(paste("meth.2",cohort,subsetFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T,nrow=nProbe)
     rownames(tdat)=tdat$cpgId
     tdat=tdat[,-1]
     tdat=as.matrix(tdat)
     tdat=t(tdat)
     
-    pdata=read.table(paste("pdata.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    pdata=read.table(paste("pdata",cohort,subsetFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     
-    counts=read.table(paste("counts.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    counts=read.table(paste("counts",cohort,subsetFlag,".txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     rownames(counts)=counts$id
     counts=as.matrix(counts[,-1])
 }
@@ -1160,7 +1171,7 @@ for (fId in 1:length(modelList)) {
     cat("\n\n============================ ",modelId,"\n\n",sep="")
     
     
-    all.results1=read.table(paste(dirRes,paste("ind.res_model",gsub("-","_",modelId),".txt",sep=""),sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    all.results1=read.table(paste(dirRes,paste("ind.res_model",gsub("-","_",modelId),cohort,subsetFlag,".txt",sep=""),sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
     if (fId==1) iA=match(all.results1$probeID,tesm$probeID)
     cat("Statictic type:")
     print(table(all.results1$statisticType),exclude=NULL)

@@ -2,8 +2,8 @@
 
 ####################################################################
 
-computerFlag=""
 computerFlag="cluster"
+computerFlag=""
 
 if (computerFlag=="cluster") {
 } else {
@@ -27,7 +27,7 @@ subsetFlag="_ctrl"
 subsetFlag="_case"
 subsetFlag=""
 
-subsetName=ifelse(subsetFlag=="",subsetFlag,paste(subsetFlag,"Subset",sep=""))
+subsetName=ifelse(subsetFlag=="",subsetFlag,paste(sub("_","",subsetFlag),"Subset",sep=""))
 
 ### R code from vignette source 'vignettes/minfi/inst/doc/minfi.Rnw'
 
@@ -207,14 +207,14 @@ library(IlluminaHumanMethylation450kmanifest)
 library(IlluminaHumanMethylation450kanno.ilmn12.hg19)
 
 
-load("tmp_3.RData")
+load(paste("tmp_3",cohort,subsetFlag,".RData",sep=""))
 
 ####################################################################
 ####################################################################
 ## ---------------------------------
 
-computerFlag=""
 computerFlag="cluster"
+computerFlag=""
 
 ## ---------------------------------
 
@@ -229,21 +229,24 @@ normFlag=""
 normFlag="_funNorm"
 normFlag="_bmiq"
 
-datType="_leuk"; subsetName2=""
-datType="_aml"; subsetName2=""
-datType="_allGuthSet1"; subsetName2=""
-datType="_allGuthSet2"; subsetName2=""
+if (F) {
+    
+    cohort="_leuk"; subsetName2=""
+    cohort="_aml"; subsetName2=""
+    cohort="_allGuthSet1"; subsetName2=""
+    cohort="_allGuthSet2"; subsetName2=""
 
-setFlag=ifelse(subsetName2=="",tolower(sub("allGuth","",datType)),subsetName2)
+    setFlag=ifelse(subsetName2=="",tolower(sub("allGuth","",cohort)),subsetName2)
 
-subsetFlag="case"
-subsetFlag="ctrl"
+    subsetFlag="_case"
+    subsetFlag="_ctrl"
 
-subsetFlag=""
 
-#subsetFlag="noHisp"
-subsetFlag="hisp"
-subsetFlag="noHispWt"
+    #subsetFlag="noHisp"
+    subsetFlag="hisp"
+    subsetFlag="noHispWt"
+    subsetFlag=""
+}
 
 covFlag=""
 mediationFlag=F
@@ -255,7 +258,7 @@ library(limma)
 library(FactoMineR)
 
 #for (subsetName2 in c("_set1","_set2")) {
-#for (datType in c("_allGuthSet1","_allGuthSet2")) {
+#for (cohort in c("_allGuthSet1","_allGuthSet2")) {
 		
 ## ---------------------------------
 
@@ -297,9 +300,9 @@ if (subsetFlag!="") {
 		   )
 }
 
-heading=paste(c(varFlag,", ",subsetFlag,", ",covFlag,", ",covPCFlag,", ",datType,subsetName2,", ",normFlag),collapse="")
+heading=paste(c(varFlag,", ",subsetFlag,", ",covFlag,", ",covPCFlag,", ",cohort,subsetName2,", ",normFlag),collapse="")
 cat("\n\n============================ Linear Regression, Epistructure ===========================\n\n")
-cat("\n\n============================",varFlag,", ",subsetFlag,", ",covFlag,", ",covPCFlag,", ",datType,subsetName2,", ",normFlag,"===========================\n\n")
+cat("\n\n============================",varFlag,", ",subsetFlag,", ",covFlag,", ",covPCFlag,", ",cohort,subsetName2,", ",normFlag,"===========================\n\n")
 
 ##############################################
 
@@ -312,16 +315,16 @@ if (computerFlag=="cluster") {
 	dirBW="data/"
 	dirCom=dirMeth
 	dirRefactor=dirEpistructure=dirMeth
-	switch(datType,
+	switch(cohort,
 		"_allGuthSet2"={
 		   dirMeth=dirClin="data/set2/"
-		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
+		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",cohort),sep="")
 		   fNameClin="clin_guthrieSet2_20140619"
            fNameClin="clin_allGuthSet2_20160928"
 		},
 		"_allGuthSet1"={
 		   dirMeth=dirClin="data/set1/"
-		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),sep="")
+		   fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",cohort),sep="")
 		   fNameClin="final"
            fNameClin="clin_allGuthSet1_20160928"
 		   dirMethLeuk=dirMeth
@@ -329,7 +332,7 @@ if (computerFlag=="cluster") {
         },
         "_allGuthSet1Set2"={
             dirMeth=dirClin="data/set1set2/"
-            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",datType),sep="")
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1set2",cohort),sep="")
             fNameClin="clin_guthrieSet1Set2_20140619"
             fNameClin="clin_guthrieSet1Set2_20151022"
         },
@@ -360,18 +363,18 @@ if (computerFlag=="cluster") {
 	dirCom="docs/all/"
     #dirRefactor="docs/SemiraGonsethNussle/refactor/"
     dirEpistructure="docs/SemiraGonsethNussle/epistructure/"
-    switch(datType,
+    switch(cohort,
 		"_allGuthSet2"={
 		   dirMeth=dirClin="docs/all/set2/"
            dirRefactor=dirClin
-           fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",datType),sep="")
+           fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set2",cohort),sep="")
 		   fNameClin="clin_guthrieSet2_20140619"
            fNameClin="clin_allGuthSet2_20160928"
 	   },
 	   "_allGuthSet1"={
 			dirMeth=dirClin="docs/all/set1/"
             dirRefactor=dirClin
-            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",datType),sep="")
+            fNameMeth=paste("beta",normFlag,ifelse(normFlag=="_funNorm","_set1",cohort),sep="")
 			fNameClin="final"
             fNameClin="clin_allGuthSet1_20160928"
 			dirMethLeuk="docs/all/set1/LEU.data/"
@@ -403,8 +406,9 @@ if (computerFlag=="cluster") {
 
 ## ----------------------------------------------
 fName1="_moba"
+dirRefactor=""
 
-load(paste(dirRefactor,"Refactor_dat",ifelse(subsetFlag=="","","_"),subsetFlag,datType,fName1,".RData",sep=""))
+load(paste(dirRefactor,"Refactor_dat",cohort,subsetFlag,fName1,".RData",sep=""))
 colnames(Refactor_dat)=paste("prinComp",1:6,sep="")
 j=match(colnames(betas),rownames(Refactor_dat)); j1=which(!is.na(j)); j2=j[j1]
 betas=betas[,j1]
@@ -413,7 +417,7 @@ pdata=cbind(pdata[j1,],Refactor_dat[j2,])
 if (T) {
 if (computerFlag=="") {
 	load(file="ann.RData")
-    crp_probes <- "docs/Crossreactive_probes.csv"       ###add the path to the csv file
+    crp_probes <- "docs/moba/Crossreactive_probes.csv"       ###add the path to the csv file
 } else {
 	if (computerFlag=="cluster") {
 		ann=read.delim(paste("data/","HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
@@ -461,8 +465,8 @@ keep=ann$snp==0 & ann$CHR%in%1:22 & !ann$IlmnID%in%cross_reactive & apply(betas,
 # Regression
 ################################################
 
-save.image("tmp.RData")
-load("tmp.RData")
+save.image(paste("tmp",cohort,subsetFlag,".RData",sep=""))
+load(paste("tmp",cohort,subsetFlag,".RData",sep=""))
 rownames(pdata)=pdata$id
 ann=data.frame(IlmnID=rownames(betas),id=rownames(betas),stringsAsFactors=T)
 
@@ -497,4 +501,4 @@ epistr5=res_PCA$var$coord[, c(5)]
 epistr=cbind(epistr1, epistr2, epistr3, epistr4, epistr5)
 
 tbl=cbind(id=rownames(epistr),as.data.frame(epistr))
-write.table(tbl,file=paste("epistructure",ifelse(subsetFlag=="","","_"),subsetFlag,datType,fName1,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
+write.table(tbl,file=paste("epistructure",cohort,subsetFlag,fName1,".txt",sep=""), sep="\t", col.names=T, row.names=F, quote=F)
