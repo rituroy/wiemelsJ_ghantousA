@@ -32,7 +32,7 @@ if (computerFlag=="cluster") {
 } else {
     ann <- read.delim(paste("docs/yuanyuan/HumanMethylation450_15017482_v.1.2.csv",sep=""),header=TRUE, sep=",",quote="",comment.char="",as.is=T,fill=T, skip=7)
     snpVec <- read.table(paste("docs/SemiraGonsethNussle/list_to_exclude_Sept_24.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
-    dmr <- read.table(paste("docs/SeungTae/leukemia.DMRs/leukemia.DMRs.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
+    #dmr <- read.table(paste("docs/SeungTae/leukemia.DMRs/leukemia.DMRs.txt",sep=""),sep="\t",h=T,quote="",comment.char="",as.is=T,fill=T)
 }
 ann[which(ann[,"CHR"]=="X"),"CHR"]="23"
 ann[which(ann[,"CHR"]=="Y"),"CHR"]="24"
@@ -119,68 +119,124 @@ if (F) {
 
 ####################################################################
 ####################################################################
+## Candidate gene summary
 fName1=""
 fName1="_beforeSVA"
 
-subsetList=c("allSamples","noHispWt")
-for (subsetFlag in subsetList) {
-    if (fName1=="_beforeSVA") {
-        datadir=paste(subsetFlag,"/",sep="")
-    } else {
-        datadir=paste("results/moba/",subsetFlag,"/misc/",sep="")
-    }
-    load(paste(datadir,"data.RData",sep=""))
-    if (fName1=="") {
-        tdat=t(tdat)
-    }
-    print("table(pdata$beadchip_position==colnames(tdat))")
-    print(table(paste(pdata$Beadchip,"_",pdata$Position,sep="")==colnames(tdat)))
-    grp2=candGene$geneSym; colId1="geneSym"; colId2="gene"
-    grp2=candGene$cpgId; colId1="cpgId"; colId2="cpgId"
-    grp2Uniq=unique(grp2)
-    n=length(grp2Uniq)+1
-    tmp=rep(NA,n); tmpC=rep("",n)
-    tbl=data.frame(gene=tmpC,cpgId=c("global",grp2Uniq),mean_ctrl=tmp,sd_ctrl=tmp,mean_case=tmp,sd_case=tmp,stringsAsFactors=F)
-    #names(tbl)[1]=colId2
-    i=match(candGene$cpgId,tbl$cpgId); i1=which(!is.na(i)); i2=i[i1]
-    tbl$gene[i2]=candGene$geneSym[i1]
-    grp=pdata$caco
-    grpUniq=sort(unique(grp))
-    ttl=c("ctrl","case")
-    k=which(tbl[,colId2]=="global")
-    for (gId in 1:length(grpUniq)) {
-        p=which(names(tbl)==paste("mean_",ttl[gId],sep=""))
-        x=c(tdat[,which(grp==grpUniq[gId])])
-        tbl[k,p]=mean(x,na.rm=T)
-        tbl[k,p+1]=sd(x,na.rm=T)
-    }
-    i=match(candGene$cpgId,rownames(tdat)); i1=which(!is.na(i)); i2=i[i1]
-    for (k in which(tbl[,colId2]%in%candGene[i1,colId1])) {
+varList=c("caco","sex")
+
+for (vId in 1:length(varList)) {
+    subsetList=c("allSamples","noHispWt")
+    for (subsetFlag in subsetList) {
+        if (fName1=="_beforeSVA") {
+            datadir=paste(subsetFlag,"/",sep="")
+        } else {
+            datadir=paste("results/moba/",subsetFlag,"/misc/",sep="")
+        }
+        load(paste(datadir,"data.RData",sep=""))
+        if (fName1=="") {
+            tdat=t(tdat)
+        }
+        print("table(pdata$beadchip_position==colnames(tdat))")
+        print(table(paste(pdata$Beadchip,"_",pdata$Position,sep="")==colnames(tdat)))
+        grp=pdata[,varList[vId]]
+        grpUniq=sort(unique(grp))
+        switch(varList[vId],
+            "caco"={ttl=c("ctrl","case")
+            },
+            "sex"={ttl=c("male","female")
+            }
+        )
+        grp2=candGene$geneSym; colId1="geneSym"; colId2="gene"
+        grp2=candGene$cpgId; colId1="cpgId"; colId2="cpgId"
+        grp2Uniq=unique(grp2)
+        n=length(grp2Uniq)+1
+        tmp=rep(NA,n); tmpC=rep("",n)
+        nm=c("gene","cpgId",paste(c("mean","sd"),"_",rep(ttl,each=2),sep=""))
+        tbl=data.frame(gene=tmpC,cpgId=c("global",grp2Uniq),tmp,tmp,tmp,tmp,stringsAsFactors=F)
+        names(tbl)=nm
+        #names(tbl)[1]=colId2
+        i=match(candGene$cpgId,tbl$cpgId); i1=which(!is.na(i)); i2=i[i1]
+        tbl$gene[i2]=candGene$geneSym[i1]
+        k=which(tbl[,colId2]=="global")
         for (gId in 1:length(grpUniq)) {
             p=which(names(tbl)==paste("mean_",ttl[gId],sep=""))
-            x=c(tdat[i2,][which(candGene[i1,colId1]==tbl[k,colId2]),which(grp==grpUniq[gId])])
+            x=c(tdat[,which(grp==grpUniq[gId])])
             tbl[k,p]=mean(x,na.rm=T)
             tbl[k,p+1]=sd(x,na.rm=T)
         }
-    }
-    switch(subsetFlag,
-        "allSamples"={
-            tbl1=tbl
-        },
-        "noHispWt"={
-            tbl2=tbl
+        i=match(candGene$cpgId,rownames(tdat)); i1=which(!is.na(i)); i2=i[i1]
+        for (k in which(tbl[,colId2]%in%candGene[i1,colId1])) {
+            for (gId in 1:length(grpUniq)) {
+                p=which(names(tbl)==paste("mean_",ttl[gId],sep=""))
+                x=c(tdat[i2,][which(candGene[i1,colId1]==tbl[k,colId2]),which(grp==grpUniq[gId])])
+                tbl[k,p]=mean(x,na.rm=T)
+                tbl[k,p+1]=sd(x,na.rm=T)
+            }
         }
-    )
+        switch(subsetFlag,
+            "allSamples"={
+                tbl1=tbl
+            },
+            "noHispWt"={
+                tbl2=tbl
+            }
+        )
+    }
+    colId=2:ncol(tbl1)
+    tbl=cbind(tbl1,tbl2[,colId])
+    fName=paste("summaryTbl",fName1,"_",varList[vId],"_ccls.txt",sep="")
+    nm=c("",subsetList[1],rep("",length(colId)-1),subsetList[2],rep("",length(colId)-1))
+    write.table(paste(nm,collapse="\t"),file=fName, sep="\t", col.names=F, row.names=F, quote=F,append=F)
+    nm=c("gene",rep(names(tbl1)[colId],2))
+    write.table(paste(nm,collapse="\t"),file=fName, sep="\t", col.names=F, row.names=F, quote=F,append=T)
+    write.table(tbl,file=fName, sep="\t", col.names=F, row.names=F, quote=F,append=T)
 }
-colId=2:ncol(tbl1)
-tbl=cbind(tbl1,tbl2[,colId])
-fName=paste("summaryTbl",fName1,"_ccls.txt",sep="")
-nm=c("",subsetList[1],rep("",length(colId)-1),subsetList[2],rep("",length(colId)-1))
-write.table(paste(nm,collapse="\t"),file=fName, sep="\t", col.names=F, row.names=F, quote=F,append=F)
-nm=c("gene",rep(names(tbl1)[colId],2))
-write.table(paste(nm,collapse="\t"),file=fName, sep="\t", col.names=F, row.names=F, quote=F,append=T)
-write.table(tbl,file=fName, sep="\t", col.names=F, row.names=F, quote=F,append=T)
 
+####################################################################
+####################################################################
+## NOT USED
+## Clinical variable summary
+
+if (F) {
+    fName1=""
+
+    varList="sex"
+
+    subsetList=c("allSamples","noHispWt")
+    for (subsetFlag in subsetList) {
+        switch(subsetFlag,
+            "allSamples"={
+                subsetName="All samples"
+            },
+            "noHispWt"={
+                subsetName="Non-hispanic white"
+            }
+        )
+        cat("\n\n",subsetName,"\n")
+        if (fName1=="_beforeSVA") {
+            datadir=paste(subsetFlag,"/",sep="")
+        } else {
+            datadir=paste("results/moba/",subsetFlag,"/misc/",sep="")
+        }
+        load(paste(datadir,"data.RData",sep=""))
+        for (vId in 1:length(varList)) {
+            grp=pdata[,varList[vId]]
+            switch(varList[vId],
+                "sex"={
+                    grp=as.character(grp)
+                    grp[which(grp=="1")]="Male"
+                    grp[which(grp=="2")]="Female"
+                }
+            )
+            grpUniq=unique(grp)
+            for (gId in 1:length(grpUniq)) {
+                x=grp[which(grp==grpUniq[gId])]
+                cat(grpUniq,": ","Mean ",mean(x),", SD ",sd(x),"\n")
+            }
+        }
+    }
+}
 
 ####################################################################
 ####################################################################
