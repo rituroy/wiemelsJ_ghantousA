@@ -124,36 +124,50 @@ fName1=""
 fName1="_beforeSVA"
 
 varList=c("caco","sex")
+varList=c("caco","sex","cacoSex")
+varList=c("cacoSex")
 
 for (vId in 1:length(varList)) {
     subsetList=c("allSamples","noHispWt")
     for (subsetFlag in subsetList) {
+        cat("\n\n",subsetFlag,"\n")
         if (fName1=="_beforeSVA") {
             datadir=paste(subsetFlag,"/",sep="")
         } else {
             datadir=paste("results/moba/",subsetFlag,"/misc/",sep="")
         }
         load(paste(datadir,"data.RData",sep=""))
+        pdata$cacoSex=paste(pdata$caco,pdata$sex)
         if (fName1=="") {
             tdat=t(tdat)
         }
-        print("table(pdata$beadchip_position==colnames(tdat))")
-        print(table(paste(pdata$Beadchip,"_",pdata$Position,sep="")==colnames(tdat)))
+        #print("table(pdata$beadchip_position==colnames(tdat))")
+        #print(table(paste(pdata$Beadchip,"_",pdata$Position,sep="")==colnames(tdat)))
         grp=pdata[,varList[vId]]
         grpUniq=sort(unique(grp))
         switch(varList[vId],
             "caco"={ttl=c("ctrl","case")
             },
             "sex"={ttl=c("male","female")
+            },
+            "cacoSex"={ttl=paste(c("male","female"),"_",rep(c("ctrl","case"),each=2),sep="")
             }
         )
+        cat("\n\nNo. of samples:\n")
+        for (gId in 1:length(grpUniq)) {
+            cat(ttl[gId],": ",length(grp[which(grp==grpUniq[gId])]),"\n",sep="")
+        }
         grp2=candGene$geneSym; colId1="geneSym"; colId2="gene"
         grp2=candGene$cpgId; colId1="cpgId"; colId2="cpgId"
         grp2Uniq=unique(grp2)
         n=length(grp2Uniq)+1
         tmp=rep(NA,n); tmpC=rep("",n)
         nm=c("gene","cpgId",paste(c("mean","sd"),"_",rep(ttl,each=2),sep=""))
-        tbl=data.frame(gene=tmpC,cpgId=c("global",grp2Uniq),tmp,tmp,tmp,tmp,stringsAsFactors=F)
+        if (varList[vId]%in%c("cacoSex")) {
+            tbl=data.frame(gene=tmpC,cpgId=c("global",grp2Uniq),tmp,tmp,tmp,tmp,tmp,tmp,tmp,tmp,stringsAsFactors=F)
+        } else {
+            tbl=data.frame(gene=tmpC,cpgId=c("global",grp2Uniq),tmp,tmp,tmp,tmp,stringsAsFactors=F)
+        }
         names(tbl)=nm
         #names(tbl)[1]=colId2
         i=match(candGene$cpgId,tbl$cpgId); i1=which(!is.na(i)); i2=i[i1]
