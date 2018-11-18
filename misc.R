@@ -329,6 +329,23 @@ for (candGeneFlag in candGeneList) {
 ## NOT USED
 ## Clinical variable summary
 
+Dear Ritu,
+
+Could you please provide a table showing the sample sizes
+per ethnicity per gender per case-control ?
+
+Thank you in advance,
+
+Alexei
+_____________
+
+"ethnicity.
+1= Hispanic
+2= Non-Hispanic White
+3= Non-Hispanic Others
+9= Don't know
+99= Missing"
+
 if (F) {
     fName1=""
 
@@ -351,6 +368,19 @@ if (F) {
             datadir=paste("results/moba/",subsetFlag,"/misc/",sep="")
         }
         load(paste(datadir,"data.RData",sep=""))
+        if (subsetFlag=="allSamples") {
+            pdata$caco2=as.character(pdata$caco)
+            pdata$caco2[which(pdata$caco==0)]="Control"
+            pdata$caco2[which(pdata$caco==1)]="Case"
+            pdata$Gender2=pdata$Gender
+            pdata$Gender2[which(pdata$Gender=="F")]="Female"
+            pdata$Gender2[which(pdata$Gender=="M")]="Male"
+            pdata$ethn=as.character(pdata$int_ch_ethnicity)
+            pdata$ethn[which(pdata$int_ch_ethnicity==1)]="Hispanic"
+            pdata$ethn[which(pdata$int_ch_ethnicity==2)]="Non-Hispanic White"
+            pdata$ethn[which(pdata$int_ch_ethnicity==3)]="Non-Hispanic Others"
+            print(table(pdata$caco2,pdata$Gender2,pdata$ethn))
+        }
         for (vId in 1:length(varList)) {
             grp=pdata[,varList[vId]]
             switch(varList[vId],
