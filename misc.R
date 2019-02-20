@@ -162,18 +162,19 @@ if (F) {
 datFlag=""
 datFlag="_beforeSVA"
 
-candGeneList="_dmr"
 candGeneList=c("_dmrRlm","_reg")
 candGeneList=c("_dmrRlm","_reg","_den")
+candGeneList="_dmr"
 
 varList=c("caco","sex")
 varList=c("caco","sex","cacoSex")
 varList=c("caco","cacoSex","cacoEthn","cacoSexEthn")
 varList=c("cacoSex")
-varList=c("caco","cacoSex","cacoEthn","cacoSexEthn")
+varList=c("cacoSexEthn")
 
 subsetList=c("noHispWt")
 subsetList=c("allSamples","noHispWt")
+subsetList=c("allSamples")
 
 if (datFlag=="_beforeSVA") datadir=paste("allSamples/",sep="") else datadir=paste("results/moba/allSamples/misc/",sep="")
 load(paste(datadir,"data.RData",sep=""))
